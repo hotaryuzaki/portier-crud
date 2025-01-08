@@ -1,0 +1,5 @@
+server:
+  port: ":4000"
+
+database:
+  dsn: "postgres://postgres:scr34m3r@localhost:5432/portier?sslmode=disable"
