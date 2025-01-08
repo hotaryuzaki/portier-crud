@@ -72,6 +72,7 @@ func CreateKey(key Key) (Key, error) {
 
 	query := `INSERT INTO keys (name, created_at, is_active, created_by) 
 						VALUES ($1, $2, $3, $4) RETURNING id`
+
 	var id int
 	err := dbConn.QueryRow(ctx, query, key.Name, time.Now(), key.IsActive, key.CreatedBy).Scan(&id)
 	if err != nil {

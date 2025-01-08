@@ -14,6 +14,13 @@ func RegisterRoutes(app *fiber.App) {
 		return c.SendString("Hello, world")
 	})
 
+	// TENANT routes
+	app.Get("/tenants", getTenants)
+	app.Get("/tenants/:id", getTenantById)
+	app.Post("/tenants", createTenant)
+	app.Put("/tenants/:id", updateTenant)
+	app.Delete("/tenants/:id", deleteTenant)
+
 	// USER routes
 	app.Get("/users", getUsers)
 	app.Get("/users/:id", getUsersById)
@@ -339,4 +346,110 @@ func deleteCopy(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusNoContent).SendString("")
+}
+
+/*** TENANTS HANDLERS ***/
+
+func getTenants(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl http://localhost:4000/tenants
+
+	tenants, err := service.GetAllTenants()
+	if err != nil {
+		log.Printf("Error getting tenants: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(tenants)
+}
+
+// Get tenant by ID
+func getTenantById(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl http://localhost:4000/tenants/1
+
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		log.Printf("Error converting ID to integer: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	tenant, err := service.GetTenantByID(id)
+	if err != nil {
+		log.Printf("Error getting tenant: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(tenant)
+}
+
+// Create a new tenant
+func createTenant(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl -X POST http://localhost:4000/tenants ^
+	// -H "Content-Type: application/json" ^
+	// -d "{\"name\": \"PT ZIG ZAG\", \"address\": \"Jln banyak belok\", \"status\": \"Pending\"}"
+
+	var tenant service.Tenant
+	if err := c.BodyParser(&tenant); err != nil {
+		log.Printf("Error parsing body: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	createdTenant, err := service.CreateTenant(tenant)
+	if err != nil {
+		log.Printf("Error creating tenant: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(createdTenant)
+}
+
+// Update an existing tenant
+func updateTenant(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl -X PUT http://localhost:4000/tenants/1 ^
+	// -H "Content-Type: application/json" ^
+	// -d "{\"name\": \"Updated Name\", \"address\": \"Updated Address\", \"status\": \"active\"}"
+
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		log.Printf("Error converting ID to integer: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	var tenant service.Tenant
+	if err := c.BodyParser(&tenant); err != nil {
+		log.Printf("Error parsing body: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	updatedTenant, err := service.UpdateTenant(id, tenant)
+	if err != nil {
+		log.Printf("Error updating tenant: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(updatedTenant)
+}
+
+// Delete a tenant
+func deleteTenant(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl -X DELETE http://localhost:4000/tenants/3 ^
+	// -H "Content-Type: application/json"
+
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		log.Printf("Error converting ID to integer: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	err = service.DeleteTenant(id)
+	if err != nil {
+		log.Printf("Error deleting tenant: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusNoContent).SendString("Tenant deleted successfully")
 }
