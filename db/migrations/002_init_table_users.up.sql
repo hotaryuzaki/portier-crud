@@ -10,6 +10,6 @@ CREATE TABLE users (
     tenant_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by INT,
-    is_active BOOLEAN
+    is_active BOOLEAN,
     FOREIGN KEY (tenant_id) REFERENCES tenants (id)
 );
