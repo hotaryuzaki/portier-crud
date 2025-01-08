@@ -7,9 +7,15 @@ import (
 	"portier/pkg/storage"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load the .env file
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
 	// Load configuration
 	cfg := config.LoadConfig()
 
