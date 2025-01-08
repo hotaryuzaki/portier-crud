@@ -29,9 +29,6 @@ func LoadConfig() Config {
 	postgresDSN := viper.GetString("database.dsn")
 	postgresDSN = os.ExpandEnv(postgresDSN) // Ensure environment variables are expanded
 
-	// Log the final DSN to debug the issue
-	log.Println("Final Postgres DSN:", postgresDSN)
-
 	// Return the config struct with updated values
 	return Config{
 		ServerPort:  viper.GetString("server.port"),
