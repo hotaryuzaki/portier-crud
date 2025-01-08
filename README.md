@@ -1,5 +1,5 @@
 # PREQUISITES
 - Go installed
-- PostgreSQL installed (db local)
+- PostgreSQL installed (i used local DB here)
   
 ## asd
