@@ -26,9 +26,11 @@ type User struct {
 
 // GetAllUsers fetches all users
 func GetAllUsers() ([]User, error) {
-	var users []User
+	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Add context
+
+	var users []User
 
 	rows, err := dbConn.Query(ctx, "SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active FROM users")
 	if err != nil {
@@ -49,6 +51,23 @@ func GetAllUsers() ([]User, error) {
 	}
 
 	return users, nil
+}
+
+// GetUserByID fetches a user by their ID
+func GetUserByID(id int) (User, error) {
+	// Get a database connection
+	dbConn := db.GetConnection()
+	ctx := context.Background() // Add context
+
+	var user User
+
+	query := `SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active FROM users WHERE id=$1`
+	err := dbConn.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive)
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
 }
 
 // CreateUser creates a new user
@@ -121,19 +140,4 @@ func DeleteUser(id int) error {
 	}
 
 	return nil
-}
-
-// GetUserByID fetches a user by their ID
-func GetUserByID(id int) (User, error) {
-	var user User
-	dbConn := db.GetConnection()
-	ctx := context.Background() // Add context
-
-	query := `SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active FROM users WHERE id=$1`
-	err := dbConn.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive)
-	if err != nil {
-		return User{}, err
-	}
-
-	return user, nil
 }
