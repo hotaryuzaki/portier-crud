@@ -130,8 +130,9 @@ func UpdateUser(id int, user User) (User, error) {
 
 // DeleteUser deletes a user
 func DeleteUser(id int) error {
+	// Get a database connection
 	dbConn := db.GetConnection()
-	ctx := context.Background() // Add context
+	ctx := context.Background() // Context for the query
 
 	query := `DELETE FROM users WHERE id=$1`
 	_, err := dbConn.Exec(ctx, query, id)

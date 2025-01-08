@@ -11,8 +11,8 @@ type Key struct {
 	ID        int       `json:"id"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
-	IsActive  bool      `json:"is_active"`
 	CreatedBy int       `json:"created_by,omitempty"` // Optional, nullable field
+	IsActive  bool      `json:"is_active"`
 }
 
 // GetAllKeys fetches all keys

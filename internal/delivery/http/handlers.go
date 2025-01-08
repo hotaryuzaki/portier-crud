@@ -27,6 +27,13 @@ func RegisterRoutes(app *fiber.App) {
 	app.Post("/keys", createKey)
 	app.Put("/keys/:id", updateKey)
 	app.Delete("/keys/:id", deleteKey)
+
+	// COPIES routes
+	app.Get("/copies", getCopies)
+	app.Get("/copies/:id", getCopiesById)
+	app.Post("/copies", createCopy)
+	app.Put("/copies/:id", updateCopy)
+	app.Delete("/copies/:id", deleteCopy)
 }
 
 /*** USERS HANDLERS ***/
@@ -226,6 +233,108 @@ func deleteKey(c *fiber.Ctx) error {
 	err = service.DeleteKey(id)
 	if err != nil {
 		log.Printf("Error deleting key: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusNoContent).SendString("")
+}
+
+/*** COPIES HANDLERS ***/
+
+func getCopies(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl http://localhost:4000/copies
+
+	copies, err := service.GetAllCopies()
+	if err != nil {
+		log.Printf("Error getting copies: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(copies)
+}
+
+func getCopiesById(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl http://localhost:4000/copies/1
+
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		log.Printf("Error getting id: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	copy, err := service.GetCopyByID(id)
+	if err != nil {
+		log.Printf("Error getting copy: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(copy)
+}
+
+func createCopy(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl -X POST http://localhost:4000/copies ^
+	// -H "Content-Type: application/json" ^
+	// -d "{\"name\": \"TEST Copy\", \"key_id\": 1, \"created_by\": 1}"
+
+	var copy service.Copy
+	if err := c.BodyParser(&copy); err != nil {
+		log.Printf("Error parsing body: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	createdCopy, err := service.CreateCopy(copy)
+	if err != nil {
+		log.Printf("Error creating copy: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(createdCopy)
+}
+
+func updateCopy(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl -X PUT http://localhost:4000/copies/1 ^
+	// -H "Content-Type: application/json" ^
+	// -d "{\"name\": \"Updated Copy Name\", \"key_id\": 2, \"created_by\": 1}"
+
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		log.Printf("Error converting ID to integer: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	var copy service.Copy
+	if err := c.BodyParser(&copy); err != nil {
+		log.Printf("Error parsing body: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	updatedCopy, err := service.UpdateCopy(id, copy)
+	if err != nil {
+		log.Printf("Error updating copy: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(updatedCopy)
+}
+
+func deleteCopy(c *fiber.Ctx) error {
+	// REQUEST EXAMPLE
+	// curl -X DELETE http://localhost:4000/copies/3 ^
+	// -H "Content-Type: application/json"
+
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		log.Printf("Error converting ID to integer: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	err = service.DeleteCopy(id)
+	if err != nil {
+		log.Printf("Error deleting copy: %v", err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
 	}
 
