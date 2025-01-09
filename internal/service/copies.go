@@ -69,18 +69,34 @@ func GetCopyByID(id int) (Copy, error) {
 
 // CreateCopy creates a new copy
 func CreateCopy(copy Copy) (Copy, error) {
+	keys, err := GetAllKeys(1, 0)
+	if err != nil {
+		fmt.Println("Error getting keys:", err)
+		return copy, err
+	}
+
+	if len(keys) > 0 {
+		keyID := keys[0].ID
+		fmt.Println("Key ID:", keyID)
+		copy.KeyID = keyID
+	} else {
+		fmt.Println("No keys found")
+		return copy, err
+	}
+
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Context for the query
 
 	// Explicitly set the default value for IsActive
 	copy.IsActive = true
+	copy.CreatedBy = 1
 
 	query := `INSERT INTO copies (name, key_id, created_at, created_by, is_active) 
 						VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
 	var id int
-	err := dbConn.QueryRow(ctx, query, copy.Name, copy.KeyID, time.Now(), copy.CreatedBy, copy.IsActive).Scan(&id)
+	err = dbConn.QueryRow(ctx, query, copy.Name, copy.KeyID, time.Now(), copy.CreatedBy, copy.IsActive).Scan(&id)
 	if err != nil {
 		log.Printf("Error creating copy: %v", err)
 		return Copy{}, fmt.Errorf("failed to create copy: %v", err)
@@ -96,8 +112,11 @@ func UpdateCopy(id int, copy Copy) (Copy, error) {
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Context for the query
 
-	query := `UPDATE copies SET name=$1, key_id=$2, created_by=$3, is_active=$4 WHERE id=$5`
-	_, err := dbConn.Exec(ctx, query, copy.Name, copy.KeyID, copy.CreatedBy, copy.IsActive, id)
+	// Explicitly set the default value for IsActive
+	copy.IsActive = true
+
+	query := `UPDATE copies SET name=$1, is_active=$2 WHERE id=$3`
+	_, err := dbConn.Exec(ctx, query, copy.Name, copy.IsActive, id)
 	if err != nil {
 		return Copy{}, err
 	}

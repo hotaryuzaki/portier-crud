@@ -71,8 +71,9 @@ func CreateKey(key Key) (Key, error) {
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Context for the query
 
-	// Explicitly set the default value for IsActive
+	// Explicitly set the default value
 	key.IsActive = true
+	key.CreatedBy = 1
 
 	query := `INSERT INTO keys (name, created_at, is_active, created_by) 
 						VALUES ($1, $2, $3, $4) RETURNING id`
@@ -93,8 +94,11 @@ func UpdateKey(id int, key Key) (Key, error) {
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Context for the query
 
-	query := `UPDATE keys SET name=$1, is_active=$2, created_by=$3 WHERE id=$4`
-	_, err := dbConn.Exec(ctx, query, key.Name, key.IsActive, key.CreatedBy, id)
+	// Explicitly set the default value
+	key.IsActive = true
+
+	query := `UPDATE keys SET name=$1, is_active=$2 WHERE id=$3`
+	_, err := dbConn.Exec(ctx, query, key.Name, key.IsActive, id)
 	if err != nil {
 		return Key{}, err
 	}
