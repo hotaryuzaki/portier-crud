@@ -17,21 +17,37 @@ type Tenant struct {
 	IsActive  bool      `json:"is_active"`
 }
 
-// GetAllTenants fetches all tenants from the database
-func GetAllTenants(limit, offset int) ([]Tenant, error) {
+// GetAllTenantsResponse represents the response structure for GetAllTenants
+type GetAllTenantsResponse struct {
+	Tenants    []Tenant `json:"tenants"`
+	TotalPages int      `json:"totalPages"`
+}
+
+// GetAllTenants fetches all tenants
+func GetAllTenants(limit, offset int) (GetAllTenantsResponse, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Query to get the total count of tenants
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM tenants`
+	if err := dbConn.QueryRow(ctx, countQuery).Scan(&totalCount); err != nil {
+		return GetAllTenantsResponse{}, fmt.Errorf("failed to get total count: %v", err)
+	}
+
+	// Calculate total pages
+	totalPages := (totalCount + limit - 1) / limit
+
+	// Query to get the paginated tenants
 	query := `SELECT id, name, address, status, created_at, is_active
 						FROM tenants 
 						ORDER BY id 
 						LIMIT $1 OFFSET $2`
 	rows, err := dbConn.Query(ctx, query, limit, offset)
-
 	if err != nil {
-		return nil, err
+		return GetAllTenantsResponse{}, err
 	}
 	defer rows.Close()
 
@@ -39,16 +55,19 @@ func GetAllTenants(limit, offset int) ([]Tenant, error) {
 	for rows.Next() {
 		var tenant Tenant
 		if err := rows.Scan(&tenant.ID, &tenant.Name, &tenant.Address, &tenant.Status, &tenant.CreatedAt, &tenant.IsActive); err != nil {
-			return nil, err
+			return GetAllTenantsResponse{}, err
 		}
 		tenants = append(tenants, tenant)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return GetAllTenantsResponse{}, err
 	}
 
-	return tenants, nil
+	return GetAllTenantsResponse{
+		Tenants:    tenants,
+		TotalPages: totalPages,
+	}, nil
 }
 
 // GetTenantByID fetches a tenant by their ID

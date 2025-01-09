@@ -17,20 +17,37 @@ type Copy struct {
 	IsActive  bool      `json:"is_active"`
 }
 
+// GetAllCopiesResponse represents the response structure for GetAllCopies
+type GetAllCopiesResponse struct {
+	Copies     []Copy `json:"copies"`
+	TotalPages int    `json:"totalPages"`
+}
+
 // GetAllCopies fetches all copies
-func GetAllCopies(limit, offset int) ([]Copy, error) {
+func GetAllCopies(limit, offset int) (GetAllCopiesResponse, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Query to get the total count of copies
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM copies`
+	if err := dbConn.QueryRow(ctx, countQuery).Scan(&totalCount); err != nil {
+		return GetAllCopiesResponse{}, fmt.Errorf("failed to get total count: %v", err)
+	}
+
+	// Calculate total pages
+	totalPages := (totalCount + limit - 1) / limit
+
+	// Query to get the paginated copies
 	query := `SELECT id, name, key_id, created_at, created_by, is_active 
 			  FROM copies 
 			  ORDER BY id 
 			  LIMIT $1 OFFSET $2`
 	rows, err := dbConn.Query(ctx, query, limit, offset)
 	if err != nil {
-		return nil, err
+		return GetAllCopiesResponse{}, err
 	}
 	defer rows.Close()
 
@@ -38,16 +55,19 @@ func GetAllCopies(limit, offset int) ([]Copy, error) {
 	for rows.Next() {
 		var copy Copy
 		if err := rows.Scan(&copy.ID, &copy.Name, &copy.KeyID, &copy.CreatedAt, &copy.CreatedBy, &copy.IsActive); err != nil {
-			return nil, err
+			return GetAllCopiesResponse{}, err
 		}
 		copies = append(copies, copy)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return GetAllCopiesResponse{}, err
 	}
 
-	return copies, nil
+	return GetAllCopiesResponse{
+		Copies:     copies,
+		TotalPages: totalPages,
+	}, nil
 }
 
 // GetCopyByID fetches a copy by its ID
@@ -69,14 +89,14 @@ func GetCopyByID(id int) (Copy, error) {
 
 // CreateCopy creates a new copy
 func CreateCopy(copy Copy) (Copy, error) {
-	keys, err := GetAllKeys(1, 0)
+	response, err := GetAllKeys(1, 0)
 	if err != nil {
 		fmt.Println("Error getting keys:", err)
 		return copy, err
 	}
 
-	if len(keys) > 0 {
-		keyID := keys[0].ID
+	if len(response.Keys) > 0 {
+		keyID := response.Keys[0].ID
 		copy.KeyID = keyID
 	} else {
 		fmt.Println("No keys found")

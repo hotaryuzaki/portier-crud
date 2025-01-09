@@ -202,7 +202,7 @@ func getKeys(c *fiber.Ctx) error {
 	}
 
 	// Call the service to get paginated keys
-	keys, err := service.GetAllKeys(limit, offset)
+	response, err := service.GetAllKeys(limit, offset)
 	if err != nil {
 		log.Printf("Error getting keys: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -210,7 +210,7 @@ func getKeys(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(keys)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func getKeysById(c *fiber.Ctx) error {
@@ -325,7 +325,7 @@ func getCopies(c *fiber.Ctx) error {
 	}
 
 	// Call the service to get paginated copies
-	copies, err := service.GetAllCopies(limit, offset)
+	response, err := service.GetAllCopies(limit, offset)
 	if err != nil {
 		log.Printf("Error getting copies: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -333,7 +333,7 @@ func getCopies(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(copies)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func getCopiesById(c *fiber.Ctx) error {
@@ -448,15 +448,15 @@ func getTenants(c *fiber.Ctx) error {
 	}
 
 	// Call the service to get paginated tenants
-	tenants, err := service.GetAllTenants(limit, offset)
+	response, err := service.GetAllTenants(limit, offset)
 	if err != nil {
 		log.Printf("Error getting tenants: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to fetch copies",
+			"error": "Failed to fetch tenants",
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(tenants)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func getTenantById(c *fiber.Ctx) error {

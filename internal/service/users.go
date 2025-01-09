@@ -116,14 +116,14 @@ func GetUserByID(id int) (User, error) {
 
 // CreateUser creates a new user
 func CreateUser(user User) (User, error) {
-	tenants, err := GetAllTenants(1, 0)
+	response, err := GetAllTenants(1, 0)
 	if err != nil {
-		fmt.Println("Error getting tenants 000:", err)
+		fmt.Println("Error getting tenants:", err)
 		return user, err
 	}
 
-	if len(tenants) > 0 {
-		tenantID := tenants[0].ID
+	if len(response.Tenants) > 0 {
+		tenantID := response.Tenants[0].ID
 		user.TenantID = tenantID
 	} else {
 		fmt.Println("No tenants found")

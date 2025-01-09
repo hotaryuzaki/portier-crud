@@ -15,20 +15,37 @@ type Key struct {
 	IsActive  bool      `json:"is_active"`
 }
 
+// GetAllKeysResponse represents the response structure for GetAllKeys
+type GetAllKeysResponse struct {
+	Keys       []Key `json:"keys"`
+	TotalPages int   `json:"totalPages"`
+}
+
 // GetAllKeys fetches all keys
-func GetAllKeys(limit, offset int) ([]Key, error) {
+func GetAllKeys(limit, offset int) (GetAllKeysResponse, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Query to get the total count of keys
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM keys`
+	if err := dbConn.QueryRow(ctx, countQuery).Scan(&totalCount); err != nil {
+		return GetAllKeysResponse{}, fmt.Errorf("failed to get total count: %v", err)
+	}
+
+	// Calculate total pages
+	totalPages := (totalCount + limit - 1) / limit
+
+	// Query to get the paginated keys
 	query := `SELECT id, name, created_at, created_by, is_active 
 			  FROM keys 
 			  ORDER BY id 
 			  LIMIT $1 OFFSET $2`
 	rows, err := dbConn.Query(ctx, query, limit, offset)
 	if err != nil {
-		return nil, err
+		return GetAllKeysResponse{}, err
 	}
 	defer rows.Close()
 
@@ -36,16 +53,19 @@ func GetAllKeys(limit, offset int) ([]Key, error) {
 	for rows.Next() {
 		var key Key
 		if err := rows.Scan(&key.ID, &key.Name, &key.CreatedAt, &key.CreatedBy, &key.IsActive); err != nil {
-			return nil, err
+			return GetAllKeysResponse{}, err
 		}
 		keys = append(keys, key)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return GetAllKeysResponse{}, err
 	}
 
-	return keys, nil
+	return GetAllKeysResponse{
+		Keys:       keys,
+		TotalPages: totalPages,
+	}, nil
 }
 
 // GetKeysByID fetches a key by their ID
