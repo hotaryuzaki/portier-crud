@@ -25,14 +25,18 @@ type User struct {
 }
 
 // GetAllUsers fetches all users
-func GetAllUsers() ([]User, error) {
+func GetAllUsers(limit, offset int) ([]User, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Add context
 
 	var users []User
 
-	rows, err := dbConn.Query(ctx, "SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active FROM users")
+	query := `SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active 
+			  FROM users 
+			  ORDER BY id 
+			  LIMIT $1 OFFSET $2`
+	rows, err := dbConn.Query(ctx, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}

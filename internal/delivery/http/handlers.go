@@ -14,13 +14,6 @@ func RegisterRoutes(app *fiber.App) {
 		return c.SendString("Hello, world")
 	})
 
-	// TENANT routes
-	app.Get("/tenants", getTenants)
-	app.Get("/tenants/:id", getTenantById)
-	app.Post("/tenants", createTenant)
-	app.Put("/tenants/:id", updateTenant)
-	app.Delete("/tenants/:id", deleteTenant)
-
 	// USER routes
 	app.Get("/users", getUsers)
 	app.Get("/users/:id", getUsersById)
@@ -41,18 +34,49 @@ func RegisterRoutes(app *fiber.App) {
 	app.Post("/copies", createCopy)
 	app.Put("/copies/:id", updateCopy)
 	app.Delete("/copies/:id", deleteCopy)
+
+	// TENANT routes
+	app.Get("/tenants", getTenants)
+	app.Get("/tenants/:id", getTenantById)
+	app.Post("/tenants", createTenant)
+	app.Put("/tenants/:id", updateTenant)
+	app.Delete("/tenants/:id", deleteTenant)
 }
 
 /*** USERS HANDLERS ***/
 
 func getUsers(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl http://localhost:4000/users
+	// curl "http://localhost:4000/users?limit=10&offset=0"
 
-	users, err := service.GetAllUsers()
+	log.Printf("limit %s", c.Query("limit", "0"))
+	log.Printf("offset %s", c.Query("offset", "0"))
+
+	// Parse limit and offset from query parameters
+	limitStr := c.Query("limit", "10")  // Default limit is 10
+	offsetStr := c.Query("offset", "0") // Default offset is 0
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid 'limit' parameter",
+		})
+	}
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid 'offset' parameter",
+		})
+	}
+
+	// Call the service to get paginated users
+	users, err := service.GetAllUsers(limit, offset)
 	if err != nil {
 		log.Printf("Error getting users: %v", err)
-		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch users",
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(users)
@@ -149,12 +173,33 @@ func deleteUser(c *fiber.Ctx) error {
 
 func getKeys(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl http://localhost:4000/keys
+	// curl "http://localhost:4000/keys?limit=10&offset=0"
 
-	keys, err := service.GetAllKeys()
+	// Parse limit and offset from query parameters
+	limitStr := c.Query("limit", "10")  // Default limit is 10
+	offsetStr := c.Query("offset", "0") // Default offset is 0
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid 'limit' parameter",
+		})
+	}
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid 'offset' parameter",
+		})
+	}
+
+	// Call the service to get paginated keys
+	keys, err := service.GetAllKeys(limit, offset)
 	if err != nil {
 		log.Printf("Error getting keys: %v", err)
-		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch keys",
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(keys)
@@ -250,12 +295,33 @@ func deleteKey(c *fiber.Ctx) error {
 
 func getCopies(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl http://localhost:4000/copies
+	// curl "http://localhost:4000/copies?limit=10&offset=0"
 
-	copies, err := service.GetAllCopies()
+	// Parse limit and offset from query parameters
+	limitStr := c.Query("limit", "10")  // Default limit is 10
+	offsetStr := c.Query("offset", "0") // Default offset is 0
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid 'limit' parameter",
+		})
+	}
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid 'offset' parameter",
+		})
+	}
+
+	// Call the service to get paginated copies
+	copies, err := service.GetAllCopies(limit, offset)
 	if err != nil {
 		log.Printf("Error getting copies: %v", err)
-		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch copies",
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(copies)
@@ -363,7 +429,6 @@ func getTenants(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tenants)
 }
 
-// Get tenant by ID
 func getTenantById(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
 	// curl http://localhost:4000/tenants/1
@@ -383,7 +448,6 @@ func getTenantById(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tenant)
 }
 
-// Create a new tenant
 func createTenant(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
 	// curl -X POST http://localhost:4000/tenants ^
@@ -405,7 +469,6 @@ func createTenant(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(createdTenant)
 }
 
-// Update an existing tenant
 func updateTenant(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
 	// curl -X PUT http://localhost:4000/tenants/1 ^
@@ -433,7 +496,6 @@ func updateTenant(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(updatedTenant)
 }
 
-// Delete a tenant
 func deleteTenant(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
 	// curl -X DELETE http://localhost:4000/tenants/3 ^

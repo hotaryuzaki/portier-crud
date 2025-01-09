@@ -16,14 +16,18 @@ type Key struct {
 }
 
 // GetAllKeys fetches all keys
-func GetAllKeys() ([]Key, error) {
+func GetAllKeys(limit, offset int) ([]Key, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Context for the query
 
 	var keys []Key
 
-	rows, err := dbConn.Query(ctx, "SELECT id, name, created_at, created_by, is_active FROM keys")
+	query := `SELECT id, name, created_at, created_by, is_active 
+			  FROM keys 
+			  ORDER BY id 
+			  LIMIT $1 OFFSET $2`
+	rows, err := dbConn.Query(ctx, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
