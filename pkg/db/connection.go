@@ -17,7 +17,6 @@ var (
 func ConnectPostgres(dsn string) *pgx.Conn {
 	once.Do(func() {
 		var err error
-		log.Printf("Connecting to PostgreSQL with DSN: %v", dsn) // Debug log for DSN
 		conn, err = pgx.Connect(context.Background(), dsn)
 		if err != nil {
 			log.Fatalf("Unable to connect to database: %v", err)
