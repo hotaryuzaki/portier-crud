@@ -21,9 +21,8 @@ type Tenant struct {
 func GetAllTenants(limit, offset int) ([]Tenant, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
-	ctx := context.Background()
-
-	var tenants []Tenant
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	query := `SELECT id, name, address, status, created_at, is_active
 						FROM tenants 
@@ -36,6 +35,7 @@ func GetAllTenants(limit, offset int) ([]Tenant, error) {
 	}
 	defer rows.Close()
 
+	var tenants []Tenant
 	for rows.Next() {
 		var tenant Tenant
 		if err := rows.Scan(&tenant.ID, &tenant.Name, &tenant.Address, &tenant.Status, &tenant.CreatedAt, &tenant.IsActive); err != nil {

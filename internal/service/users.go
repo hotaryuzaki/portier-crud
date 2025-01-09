@@ -41,9 +41,8 @@ func (u *User) ConvertGender() error {
 func GetAllUsers(limit, offset int) ([]User, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
-	ctx := context.Background() // Add context
-
-	var users []User
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	query := `SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active 
 			  FROM users 
@@ -55,6 +54,7 @@ func GetAllUsers(limit, offset int) ([]User, error) {
 	}
 	defer rows.Close()
 
+	var users []User
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive); err != nil {

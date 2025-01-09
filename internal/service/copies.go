@@ -21,9 +21,8 @@ type Copy struct {
 func GetAllCopies(limit, offset int) ([]Copy, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
-	ctx := context.Background() // Context for the query
-
-	var copies []Copy
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	query := `SELECT id, name, key_id, created_at, created_by, is_active 
 			  FROM copies 
@@ -35,6 +34,7 @@ func GetAllCopies(limit, offset int) ([]Copy, error) {
 	}
 	defer rows.Close()
 
+	var copies []Copy
 	for rows.Next() {
 		var copy Copy
 		if err := rows.Scan(&copy.ID, &copy.Name, &copy.KeyID, &copy.CreatedAt, &copy.CreatedBy, &copy.IsActive); err != nil {

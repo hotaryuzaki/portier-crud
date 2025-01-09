@@ -19,9 +19,8 @@ type Key struct {
 func GetAllKeys(limit, offset int) ([]Key, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
-	ctx := context.Background() // Context for the query
-
-	var keys []Key
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	query := `SELECT id, name, created_at, created_by, is_active 
 			  FROM keys 
@@ -33,6 +32,7 @@ func GetAllKeys(limit, offset int) ([]Key, error) {
 	}
 	defer rows.Close()
 
+	var keys []Key
 	for rows.Next() {
 		var key Key
 		if err := rows.Scan(&key.ID, &key.Name, &key.CreatedAt, &key.CreatedBy, &key.IsActive); err != nil {
