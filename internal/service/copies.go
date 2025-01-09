@@ -77,7 +77,6 @@ func CreateCopy(copy Copy) (Copy, error) {
 
 	if len(keys) > 0 {
 		keyID := keys[0].ID
-		fmt.Println("Key ID:", keyID)
 		copy.KeyID = keyID
 	} else {
 		fmt.Println("No keys found")

@@ -105,12 +105,18 @@ func createUser(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
 	// curl -X POST http://localhost:4000/users ^
 	// -H "Content-Type: application/json" ^
-	// -d "{\"username\": \"johndoe\", \"email\": \"johndoe@example.com\", \"password\": \"securepassword123\", \"name\": \"John Doe\", \"gender\": true, \"id_number\": \"123456789\", \"user_image\": \"http://example.com/image.jpg\", \"tenant_id\": 1}"
+	// -d "{\"username\": \"johndoe\", \"email\": \"johndoe@example.com\", \"password\": \"securepassword123\", \"name\": \"John Doe\", \"gender\": \"1\", \"id_number\": \"123456789\", \"user_image\": \"http://example.com/image.jpg\", \"tenant_id\": 1}"
 
 	var user service.User
 	if err := c.BodyParser(&user); err != nil {
 		log.Printf("Error parsing body: %v", err)
 		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	// Convert the GenderStr to a boolean
+	if err := user.ConvertGender(); err != nil {
+		log.Printf("Error converting gender: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid gender value")
 	}
 
 	createdUser, err := service.CreateUser(user)
@@ -419,12 +425,33 @@ func deleteCopy(c *fiber.Ctx) error {
 
 func getTenants(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl http://localhost:4000/tenants
+	// curl "http://localhost:4000/tenants?limit=10&offset=0"
 
-	tenants, err := service.GetAllTenants()
+	// Parse limit and offset from query parameters
+	limitStr := c.Query("limit", "10")  // Default limit is 10
+	offsetStr := c.Query("offset", "0") // Default offset is 0
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid 'limit' parameter",
+		})
+	}
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid 'offset' parameter",
+		})
+	}
+
+	// Call the service to get paginated tenants
+	tenants, err := service.GetAllTenants(limit, offset)
 	if err != nil {
 		log.Printf("Error getting tenants: %v", err)
-		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch copies",
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(tenants)

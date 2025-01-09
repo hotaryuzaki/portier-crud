@@ -16,12 +16,25 @@ type User struct {
 	Email     string    `json:"email"`
 	Password  string    `json:"password"`
 	Name      string    `json:"name"`
-	Gender    bool      `json:"gender"`
+	GenderStr string    `json:"gender"` // Temporary field to hold the string value
+	Gender    bool      `json:"-"`      // true = male, false = female. This is to make the gender always flexible in the Frontend
 	IDNumber  string    `json:"id_number"`
 	UserImage string    `json:"user_image"`
 	TenantID  int       `json:"tenant_id"`
 	CreatedAt time.Time `json:"created_at"`
 	IsActive  bool      `json:"is_active"`
+}
+
+// ConvertGender converts the GenderStr to a boolean value
+func (u *User) ConvertGender() error {
+	if u.GenderStr == "1" {
+		u.Gender = true
+	} else if u.GenderStr == "0" {
+		u.Gender = false
+	} else {
+		return fmt.Errorf("invalid gender value")
+	}
+	return nil
 }
 
 // GetAllUsers fetches all users
@@ -76,6 +89,20 @@ func GetUserByID(id int) (User, error) {
 
 // CreateUser creates a new user
 func CreateUser(user User) (User, error) {
+	tenants, err := GetAllTenants(1, 0)
+	if err != nil {
+		fmt.Println("Error getting tenants 000:", err)
+		return user, err
+	}
+
+	if len(tenants) > 0 {
+		tenantID := tenants[0].ID
+		user.TenantID = tenantID
+	} else {
+		fmt.Println("No tenants found")
+		return user, err
+	}
+
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Context for the query

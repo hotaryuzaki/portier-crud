@@ -18,14 +18,19 @@ type Tenant struct {
 }
 
 // GetAllTenants fetches all tenants from the database
-func GetAllTenants() ([]Tenant, error) {
+func GetAllTenants(limit, offset int) ([]Tenant, error) {
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx := context.Background()
 
 	var tenants []Tenant
 
-	rows, err := dbConn.Query(ctx, "SELECT id, name, address, status, created_at, is_active FROM tenants")
+	query := `SELECT id, name, address, status, created_at, is_active
+						FROM tenants 
+						ORDER BY id 
+						LIMIT $1 OFFSET $2`
+	rows, err := dbConn.Query(ctx, query, limit, offset)
+
 	if err != nil {
 		return nil, err
 	}
