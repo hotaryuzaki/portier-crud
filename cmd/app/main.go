@@ -11,8 +11,14 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 )
+
+func requestLogger(c *fiber.Ctx) error {
+	log.Printf("Received request: %s %s", c.Method(), c.Path())
+	return c.Next()
+}
 
 func main() {
 	// Load the .env file
@@ -28,6 +34,16 @@ func main() {
 
 	// Setup PostgreSQL middleware
 	storage.SetupPostgresMiddleware(app, cfg)
+
+	// Enable CORS
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*", // Allow all origins for testing purposes
+		AllowMethods: "GET,POST,PUT,DELETE",
+		AllowHeaders: "Content-Type,Authorization",
+	}))
+
+	// Use the request logger middleware
+	app.Use(requestLogger)
 
 	// Register routes
 	http.RegisterRoutes(app)
