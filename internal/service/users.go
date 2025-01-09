@@ -37,6 +37,14 @@ func (u *User) ConvertGender() error {
 	return nil
 }
 
+// ConvertGenderToStr converts the Gender boolean to a string value
+func (u *User) ConvertGenderToStr() string {
+	if u.Gender {
+		return "1"
+	}
+	return "0"
+}
+
 // GetAllUsers fetches all users
 func GetAllUsers(limit, offset int) ([]User, error) {
 	// Get a database connection
@@ -45,9 +53,9 @@ func GetAllUsers(limit, offset int) ([]User, error) {
 	defer cancel()
 
 	query := `SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active 
-			  FROM users 
-			  ORDER BY id 
-			  LIMIT $1 OFFSET $2`
+						FROM users 
+						ORDER BY id 
+						LIMIT $1 OFFSET $2`
 	rows, err := dbConn.Query(ctx, query, limit, offset)
 	if err != nil {
 		return nil, err

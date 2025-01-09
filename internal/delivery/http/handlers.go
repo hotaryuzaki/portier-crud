@@ -49,9 +49,6 @@ func getUsers(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
 	// curl "http://localhost:4000/users?limit=10&offset=0"
 
-	log.Printf("limit %s", c.Query("limit", "0"))
-	log.Printf("offset %s", c.Query("offset", "0"))
-
 	// Parse limit and offset from query parameters
 	limitStr := c.Query("limit", "10")  // Default limit is 10
 	offsetStr := c.Query("offset", "0") // Default offset is 0
@@ -77,6 +74,11 @@ func getUsers(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch users",
 		})
+	}
+
+	// Convert Gender boolean to string for the response
+	for i := range users {
+		users[i].GenderStr = users[i].ConvertGenderToStr()
 	}
 
 	return c.Status(fiber.StatusOK).JSON(users)
