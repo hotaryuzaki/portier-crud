@@ -25,6 +25,12 @@ type User struct {
 	IsActive  bool      `json:"is_active"`
 }
 
+// GetAllUsersResponse represents the response structure for GetAllUsers
+type GetAllUsersResponse struct {
+	Users      []User `json:"users"`
+	TotalPages int    `json:"totalPages"`
+}
+
 // ConvertGender converts the GenderStr to a boolean value
 func (u *User) ConvertGender() error {
 	if u.GenderStr == "1" {
@@ -46,19 +52,29 @@ func (u *User) ConvertGenderToStr() string {
 }
 
 // GetAllUsers fetches all users
-func GetAllUsers(limit, offset int) ([]User, error) {
-	// Get a database connection
+func GetAllUsers(limit, offset int) (GetAllUsersResponse, error) {
 	dbConn := db.GetConnection()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Query to get the total count of users
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM users`
+	if err := dbConn.QueryRow(ctx, countQuery).Scan(&totalCount); err != nil {
+		return GetAllUsersResponse{}, fmt.Errorf("failed to get total count: %v", err)
+	}
+
+	// Calculate total pages
+	totalPages := (totalCount + limit - 1) / limit
+
+	// Query to get the paginated users
 	query := `SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active 
 						FROM users 
 						ORDER BY id 
 						LIMIT $1 OFFSET $2`
 	rows, err := dbConn.Query(ctx, query, limit, offset)
 	if err != nil {
-		return nil, err
+		return GetAllUsersResponse{}, err
 	}
 	defer rows.Close()
 
@@ -66,16 +82,19 @@ func GetAllUsers(limit, offset int) ([]User, error) {
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive); err != nil {
-			return nil, err
+			return GetAllUsersResponse{}, err
 		}
 		users = append(users, user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return GetAllUsersResponse{}, err
 	}
 
-	return users, nil
+	return GetAllUsersResponse{
+		Users:      users,
+		TotalPages: totalPages,
+	}, nil
 }
 
 // GetUserByID fetches a user by their ID

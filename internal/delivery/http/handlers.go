@@ -68,7 +68,7 @@ func getUsers(c *fiber.Ctx) error {
 	}
 
 	// Call the service to get paginated users
-	users, err := service.GetAllUsers(limit, offset)
+	response, err := service.GetAllUsers(limit, offset)
 	if err != nil {
 		log.Printf("Error getting users: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -77,11 +77,11 @@ func getUsers(c *fiber.Ctx) error {
 	}
 
 	// Convert Gender boolean to string for the response
-	for i := range users {
-		users[i].GenderStr = users[i].ConvertGenderToStr()
+	for i := range response.Users {
+		response.Users[i].GenderStr = response.Users[i].ConvertGenderToStr()
 	}
 
-	return c.Status(fiber.StatusOK).JSON(users)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func getUsersById(c *fiber.Ctx) error {
