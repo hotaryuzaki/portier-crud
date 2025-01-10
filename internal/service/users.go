@@ -68,7 +68,7 @@ func GetAllUsers(limit, offset int) (GetAllUsersResponse, error) {
 	totalPages := (totalCount + limit - 1) / limit
 
 	// Query to get the paginated users
-	query := `SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active 
+	query := `SELECT id, username, email, name, gender, id_number, user_image, tenant_id, created_at, is_active 
 						FROM users 
 						ORDER BY id 
 						LIMIT $1 OFFSET $2`
@@ -81,7 +81,7 @@ func GetAllUsers(limit, offset int) (GetAllUsersResponse, error) {
 	var users []User
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive); err != nil {
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive); err != nil {
 			return GetAllUsersResponse{}, err
 		}
 		users = append(users, user)
@@ -105,8 +105,8 @@ func GetUserByID(id int) (User, error) {
 
 	var user User
 
-	query := `SELECT id, username, email, password, name, gender, id_number, user_image, tenant_id, created_at, is_active FROM users WHERE id=$1`
-	err := dbConn.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive)
+	query := `SELECT id, username, email, name, gender, id_number, user_image, tenant_id, created_at, is_active FROM users WHERE id=$1`
+	err := dbConn.QueryRow(ctx, query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive)
 	if err != nil {
 		return User{}, err
 	}
