@@ -52,15 +52,32 @@ func (u *User) ConvertGenderToStr() string {
 }
 
 // GetAllUsers fetches all users
-func GetAllUsers(limit, offset int) (GetAllUsersResponse, error) {
+func GetAllUsers(limit, offset int, name, idNumber string) (GetAllUsersResponse, error) {
 	dbConn := db.GetConnection()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Query to get the total count of users
+	// Set default values for name and idNumber if they are empty
+	if name == "" {
+		name = "%"
+	}
+	if idNumber == "" {
+		idNumber = "%"
+	}
+
+	// Build the query with optional search/filter parameters
+	query := `SELECT id, username, email, name, gender, id_number, user_image, tenant_id, created_at, is_active 
+						FROM users 
+						WHERE name ILIKE $1 AND id_number ILIKE $2 
+						ORDER BY id LIMIT $3 OFFSET $4`
+	args := []interface{}{"%" + name + "%", "%" + idNumber + "%", limit, offset}
+
+	// Query to get the total count of users with the same filters
+	countQuery := `SELECT COUNT(*) FROM users WHERE name ILIKE $1 AND id_number ILIKE $2`
+	countArgs := []interface{}{"%" + name + "%", "%" + idNumber + "%"}
+
 	var totalCount int
-	countQuery := `SELECT COUNT(*) FROM users`
-	if err := dbConn.QueryRow(ctx, countQuery).Scan(&totalCount); err != nil {
+	if err := dbConn.QueryRow(ctx, countQuery, countArgs...).Scan(&totalCount); err != nil {
 		return GetAllUsersResponse{}, fmt.Errorf("failed to get total count: %v", err)
 	}
 
@@ -68,11 +85,7 @@ func GetAllUsers(limit, offset int) (GetAllUsersResponse, error) {
 	totalPages := (totalCount + limit - 1) / limit
 
 	// Query to get the paginated users
-	query := `SELECT id, username, email, name, gender, id_number, user_image, tenant_id, created_at, is_active 
-						FROM users 
-						ORDER BY id 
-						LIMIT $1 OFFSET $2`
-	rows, err := dbConn.Query(ctx, query, limit, offset)
+	rows, err := dbConn.Query(ctx, query, args...)
 	if err != nil {
 		return GetAllUsersResponse{}, err
 	}
@@ -84,6 +97,7 @@ func GetAllUsers(limit, offset int) (GetAllUsersResponse, error) {
 		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Name, &user.Gender, &user.IDNumber, &user.UserImage, &user.TenantID, &user.CreatedAt, &user.IsActive); err != nil {
 			return GetAllUsersResponse{}, err
 		}
+		user.GenderStr = user.ConvertGenderToStr()
 		users = append(users, user)
 	}
 
@@ -162,28 +176,41 @@ func CreateUser(user User) (User, error) {
 }
 
 // UpdateUser updates a user's information
-func UpdateUser(id int, user User) (User, error) {
-	// Get a database connection
+func UpdateUser(id int, updatedUser User) (User, error) {
 	dbConn := db.GetConnection()
-	ctx := context.Background() // Context for the query
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	// Hash the password before storing it
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return User{}, err
+	// Check if the password is provided
+	if updatedUser.Password == "" {
+		log.Println("Updating user without password")
+		// Update user without changing the password
+		updateQuery := `UPDATE users SET username=$1, email=$2, name=$3, gender=$4, id_number=$5, user_image=$6, tenant_id=$7, is_active=$8 WHERE id=$9`
+		_, err := dbConn.Exec(ctx, updateQuery, updatedUser.Username, updatedUser.Email, updatedUser.Name, updatedUser.Gender, updatedUser.IDNumber, updatedUser.UserImage, updatedUser.TenantID, updatedUser.IsActive, id)
+		if err != nil {
+			return User{}, fmt.Errorf("failed to update user: %v", err)
+		}
+	} else {
+		log.Println("Updating user with password")
+		// Hash the new password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedUser.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return User{}, fmt.Errorf("failed to hash password: %v", err)
+		}
+		updatedUser.Password = string(hashedPassword)
+
+		// Update user with the new password
+		updateQuery := `UPDATE users SET username=$1, email=$2, password=$3, name=$4, gender=$5, id_number=$6, user_image=$7, tenant_id=$8, is_active=$9 WHERE id=$10`
+		_, err = dbConn.Exec(ctx, updateQuery, updatedUser.Username, updatedUser.Email, updatedUser.Password, updatedUser.Name, updatedUser.Gender, updatedUser.IDNumber, updatedUser.UserImage, updatedUser.TenantID, updatedUser.IsActive, id)
+		if err != nil {
+			return User{}, fmt.Errorf("failed to update user: %v", err)
+		}
 	}
 
-	// Replace the original password with the hashed one
-	user.Password = string(hashedPassword)
-
-	query := `UPDATE users SET username=$1, email=$2, password=$3, name=$4, gender=$5, id_number=$6, user_image=$7, tenant_id=$8, is_active=$9 WHERE id=$10`
-	_, err = dbConn.Exec(ctx, query, user.Username, user.Email, user.Password, user.Name, user.Gender, user.IDNumber, user.UserImage, user.TenantID, user.IsActive, id)
-	if err != nil {
-		return User{}, err
-	}
-
-	user.ID = id
-	return user, nil
+	// Return the updated user data
+	updatedUser.ID = id
+	updatedUser.Password = "" // remove password from the response
+	return updatedUser, nil
 }
 
 // DeleteUser deletes a user

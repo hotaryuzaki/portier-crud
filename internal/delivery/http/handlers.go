@@ -47,7 +47,7 @@ func RegisterRoutes(app *fiber.App) {
 
 func getUsers(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl "http://localhost:4000/users?limit=10&offset=0"
+	// curl "http://localhost:4000/users?limit=10&offset=0&name=John&idnumber=123"
 
 	// Parse limit and offset from query parameters
 	limitStr := c.Query("limit", "10")  // Default limit is 10
@@ -67,18 +67,17 @@ func getUsers(c *fiber.Ctx) error {
 		})
 	}
 
-	// Call the service to get paginated users
-	response, err := service.GetAllUsers(limit, offset)
+	// Parse name and idnumber from query parameters
+	name := c.Query("name", "")
+	idNumber := c.Query("idnumber", "")
+
+	// Call the service to get paginated users with optional search/filter parameters
+	response, err := service.GetAllUsers(limit, offset, name, idNumber)
 	if err != nil {
 		log.Printf("Error getting users: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch users",
 		})
-	}
-
-	// Convert Gender boolean to string for the response
-	for i := range response.Users {
-		response.Users[i].GenderStr = response.Users[i].ConvertGenderToStr()
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)
@@ -134,7 +133,7 @@ func updateUser(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
 	// curl -X PUT http://localhost:4000/users/1 ^
 	// -H "Content-Type: application/json" ^
-	// -d "{\"username\": \"AMRI\", \"email\": \"amri@example.com\", \"password\": \"12345\", \"name\": \"AMRI\", \"gender\": true, \"id_number\": \"317172727272\", \"user_image\": \"http://example.com/image.jpg\", \"tenant_id\": 1}"
+	// -d "{\"username\": \"newusername\", \"email\": \"newemail@example.com\", \"password\": \"newpassword\", \"name\": \"New Name\", \"gender\": \"1\", \"id_number\": \"123456789\", \"user_image\": \"http://example.com/image.jpg\", \"tenant_id\": 1, \"is_active\": true}"
 
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -142,13 +141,13 @@ func updateUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
 	}
 
-	var user service.User
-	if err := c.BodyParser(&user); err != nil {
+	var updatedUser service.User
+	if err := c.BodyParser(&updatedUser); err != nil {
 		log.Printf("Error parsing body: %v", err)
 		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
 	}
 
-	updatedUser, err := service.UpdateUser(id, user)
+	updatedUser, err = service.UpdateUser(id, updatedUser)
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
