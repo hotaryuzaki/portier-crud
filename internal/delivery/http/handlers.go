@@ -104,9 +104,9 @@ func getUsersById(c *fiber.Ctx) error {
 
 func createUser(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X POST http://localhost:4000/users ^
-	// -H "Content-Type: application/json" ^
-	// -d "{\"username\": \"johndoe\", \"email\": \"johndoe@example.com\", \"password\": \"securepassword123\", \"name\": \"John Doe\", \"gender\": \"1\", \"id_number\": \"123456789\", \"user_image\": \"http://example.com/image.jpg\", \"tenant_id\": 1}"
+	// curl -X POST http://localhost:4000/users \
+	// -H "Content-Type: application/json" \
+	// -d '{"username": "johndoe", "email": "johndoe@example.com", "password": "securepassword123", "name": "John Doe", "gender": "1", "id_number": "123456789", "user_image": "http://example.com/image.jpg", "tenant_id": 1}'
 
 	var user service.User
 	if err := c.BodyParser(&user); err != nil {
@@ -479,9 +479,9 @@ func getTenantById(c *fiber.Ctx) error {
 
 func createTenant(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X POST http://localhost:4000/tenants ^
-	// -H "Content-Type: application/json" ^
-	// -d "{\"name\": \"PT ZIG ZAG\", \"address\": \"Jln banyak belok\", \"status\": \"Pending\"}"
+	// curl -X POST http://localhost:4000/tenants \
+	// -H "Content-Type: application/json" \
+	// -d '{"name": "PT ZIG ZAG", "address": "Jln banyak belok", "status": "Pending"}'
 
 	var tenant service.Tenant
 	if err := c.BodyParser(&tenant); err != nil {

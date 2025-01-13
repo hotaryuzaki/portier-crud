@@ -21,16 +21,44 @@ clean:
 test:
 	go test ./...
 
+# Command to run Docker Compose
+docker-compose-up:
+	docker-compose up -d
+
+# Command to build Docker images
+docker-build:
+	docker-compose build
+
+# Command to stop Docker Compose
+docker-compose-down:
+	docker-compose down
+
+# Command to restart Docker Compose
+docker-compose-restart:
+	docker-compose down && docker-compose up -d
+
+# Command to view Docker Compose logs
+docker-compose-logs:
+	docker-compose logs -f
+
+# Command to remove Docker containers, networks, and volumes
+docker-clean:
+	docker-compose down -v --rmi all --remove-orphans
+
+# Command to build the backend
+build-backend:
+	docker-compose run --rm app go build -o main .
+
+# Command to build the frontend
+build-frontend:
+	docker-compose run --rm frontend yarn build
+
+# Command to run migrations
 migrate-up:
-	ifeq ($(OS),Windows_NT)
-		# Use Windows-compatible syntax for setting PGPASSWORD
-		@for file in db/migrations/*.sql; do \
-			set PGPASSWORD=$(DB_PASS) && \
-			psql -h $(DB_HOST) -U $(DB_USER) -d $(DB_NAME) -f "$$file"; \
-		done
-	else
-		# Use Unix-compatible syntax for setting PGPASSWORD
-		@for file in db/migrations/*.sql; do \
-			PGPASSWORD=$(PGPASSWORD) psql -h $(DB_HOST) -U $(DB_USER) -d $(DB_NAME) -f "$$file"; \
-		done
-	endif
+	for file in db/migrations/*.sql; do \
+		docker-compose run --rm db bash -c "PGPASSWORD=${DB_PASS} psql -h db -U ${DB_USER} -d ${DB_NAME} -f /docker-entrypoint-initdb.d/migrations/$$(basename $$file)"; \
+	done
+
+# Command to open psql session in the PostgreSQL container
+psql:
+	docker-compose run --rm db psql -h db -U ${DB_USER} -d ${DB_NAME}
