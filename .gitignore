@@ -5,16 +5,17 @@
 # for frontend repo
 frontend/*
 !frontend/.gitignore
-
-# Binaries for programs and plugins
-.history
-
+\
 # Binaries for programs and plugins
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
+.history
+
+# Go build
+main
 
 # Test binary, built with `go test -c`
 *.test

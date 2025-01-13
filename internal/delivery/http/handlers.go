@@ -132,9 +132,9 @@ func createUser(c *fiber.Ctx) error {
 
 func updateUser(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X PUT http://localhost:4000/users/1 ^
-	// -H "Content-Type: application/json" ^
-	// -d "{\"username\": \"newusername\", \"email\": \"newemail@example.com\", \"password\": \"newpassword\", \"name\": \"New Name\", \"gender\": \"1\", \"id_number\": \"123456789\", \"user_image\": \"http://example.com/image.jpg\", \"tenant_id\": 1, \"is_active\": true}"
+	// curl -X PUT http://localhost:4000/users/1 \
+	// -H "Content-Type: application/json" \
+	// -d '{"username": "newusername", "email": "newemail@example.com", "password": "newpassword", "name": "New Name", "gender": "1", "id_number": "123456789", "user_image": "http://example.com/image.jpg", "tenant_id": 1, "is_active": true}'
 
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -159,8 +159,7 @@ func updateUser(c *fiber.Ctx) error {
 
 func deleteUser(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X DELETE http://localhost:4000/users/3 ^
-	// -H "Content-Type: application/json"
+	// curl -X DELETE http://localhost:4000/users/3
 
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -234,9 +233,9 @@ func getKeysById(c *fiber.Ctx) error {
 
 func createKey(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X POST http://localhost:4000/keys ^
-	// -H "Content-Type: application/json" ^
-	// -d "{\"name\": \"TEST Key\"}"
+	// curl -X POST http://localhost:4000/keys \
+	// -H "Content-Type: application/json" \
+	// -d '{"name": "TEST Key"}'
 
 	var key service.Key
 	if err := c.BodyParser(&key); err != nil {
@@ -255,9 +254,9 @@ func createKey(c *fiber.Ctx) error {
 
 func updateKey(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X PUT http://localhost:4000/keys/1 ^
-	// -H "Content-Type: application/json" ^
-	// -d "{\"name\": \"Updated Key Name\", \"is_active\": false}"
+	// curl -X PUT http://localhost:4000/keys/1 \
+	// -H "Content-Type: application/json" \
+	// -d '{"name": "Updated Key Name", "is_active": false}'
 
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -282,8 +281,7 @@ func updateKey(c *fiber.Ctx) error {
 
 func deleteKey(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X DELETE http://localhost:4000/keys/3 ^
-	// -H "Content-Type: application/json"
+	// curl -X DELETE http://localhost:4000/keys/3
 
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -357,9 +355,9 @@ func getCopiesById(c *fiber.Ctx) error {
 
 func createCopy(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X POST http://localhost:4000/copies ^
-	// -H "Content-Type: application/json" ^
-	// -d "{\"name\": \"TEST Copy\"}"
+	// curl -X POST http://localhost:4000/copies \
+	// -H "Content-Type: application/json" \
+	// -d '{"name": "TEST Copy"}'
 
 	var copy service.Copy
 	if err := c.BodyParser(&copy); err != nil {
@@ -378,9 +376,9 @@ func createCopy(c *fiber.Ctx) error {
 
 func updateCopy(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X PUT http://localhost:4000/copies/1 ^
-	// -H "Content-Type: application/json" ^
-	// -d "{\"name\": \"Updated Copy Name\", \"is_active\": true}"
+	// curl -X PUT http://localhost:4000/copies/1 \
+	// -H "Content-Type: application/json" \
+	// -d '{"name": "Updated Copy Name", "is_active": true}'
 
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -501,9 +499,9 @@ func createTenant(c *fiber.Ctx) error {
 
 func updateTenant(c *fiber.Ctx) error {
 	// REQUEST EXAMPLE
-	// curl -X PUT http://localhost:4000/tenants/1 ^
-	// -H "Content-Type: application/json" ^
-	// -d "{\"name\": \"Updated Name\", \"address\": \"Updated Address\", \"status\": \"active\"}"
+	// curl -X PUT http://localhost:4000/tenants/1 \
+	// -H "Content-Type: application/json" \
+	// -d '{"name": "Updated Name", "address": "Updated Address", "status": "active"}'
 
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {

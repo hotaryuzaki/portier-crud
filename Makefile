@@ -57,14 +57,6 @@ docker-compose-logs-db:
 docker-clean:
 	docker-compose down -v --rmi all --remove-orphans
 
-# Command to build the backend
-build-backend:
-	docker-compose run --rm app go build -o main .
-
-# Command to build the frontend
-build-frontend:
-	docker-compose run --rm frontend yarn build
-
 # Command to run migrations
 migrate-up:
 	for file in db/migrations/*.sql; do \
@@ -74,3 +66,11 @@ migrate-up:
 # Command to open psql session in the PostgreSQL container
 psql:
 	docker-compose run --rm db psql -h db -U ${DB_USER} -d ${DB_NAME}
+
+# Command to restart the Go backend in the app container
+restart-backend:
+	docker-compose restart app
+
+# Command to restart the frontend container
+restart-frontend:
+	docker-compose restart frontend

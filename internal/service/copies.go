@@ -89,23 +89,25 @@ func GetCopyByID(id int) (Copy, error) {
 
 // CreateCopy creates a new copy
 func CreateCopy(copy Copy) (Copy, error) {
-	response, err := GetAllKeys(1, 0)
-	if err != nil {
-		fmt.Println("Error getting keys:", err)
-		return copy, err
-	}
-
-	if len(response.Keys) > 0 {
-		keyID := response.Keys[0].ID
-		copy.KeyID = keyID
-	} else {
-		fmt.Println("No keys found")
-		return copy, err
-	}
-
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Context for the query
+
+	// If KeyID is not provided, fetch the first available key
+	if copy.KeyID == 0 {
+		response, err := GetAllKeys(1, 0)
+		if err != nil {
+			fmt.Println("Error getting keys:", err)
+			return copy, err
+		}
+
+		if len(response.Keys) > 0 {
+			copy.KeyID = response.Keys[0].ID
+		} else {
+			fmt.Println("No keys found")
+			return copy, fmt.Errorf("no keys found")
+		}
+	}
 
 	// Explicitly set the default value for IsActive
 	copy.IsActive = true
@@ -115,7 +117,7 @@ func CreateCopy(copy Copy) (Copy, error) {
 						VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
 	var id int
-	err = dbConn.QueryRow(ctx, query, copy.Name, copy.KeyID, time.Now(), copy.CreatedBy, copy.IsActive).Scan(&id)
+	err := dbConn.QueryRow(ctx, query, copy.Name, copy.KeyID, time.Now(), copy.CreatedBy, copy.IsActive).Scan(&id)
 	if err != nil {
 		log.Printf("Error creating copy: %v", err)
 		return Copy{}, fmt.Errorf("failed to create copy: %v", err)

@@ -130,23 +130,25 @@ func GetUserByID(id int) (User, error) {
 
 // CreateUser creates a new user
 func CreateUser(user User) (User, error) {
-	response, err := GetAllTenants(1, 0)
-	if err != nil {
-		fmt.Println("Error getting tenants:", err)
-		return user, err
-	}
-
-	if len(response.Tenants) > 0 {
-		tenantID := response.Tenants[0].ID
-		user.TenantID = tenantID
-	} else {
-		fmt.Println("No tenants found")
-		return user, err
-	}
-
 	// Get a database connection
 	dbConn := db.GetConnection()
 	ctx := context.Background() // Context for the query
+
+	// If TenantID is not provided, fetch the first available tenant
+	if user.TenantID == 0 {
+		response, err := GetAllTenants(1, 0)
+		if err != nil {
+			fmt.Println("Error getting tenants:", err)
+			return user, err
+		}
+
+		if len(response.Tenants) > 0 {
+			user.TenantID = response.Tenants[0].ID
+		} else {
+			fmt.Println("No tenants found")
+			return user, fmt.Errorf("no tenants found")
+		}
+	}
 
 	// Hash the password before storing it
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
