@@ -71,13 +71,32 @@ make psql
 
 This command will open a `psql` session in the PostgreSQL container using the credentials specified in the `.env` file.
 
-### 6. CHECK DOCKER CONTAINERS
+### 6. CREATE INITIAL DATA
+**Note: Before creating a user, you must first create a tenant.**
+
+To create a tenant, use the following `curl` command:
+```sh
+curl -X POST http://localhost:4000/tenants \
+-H "Content-Type: application/json" \
+-d '{"name": "PT ZIG ZAG", "address": "Jln banyak belok", "status": "Active"}'
+```
+
+**Note: Before creating keys and copies, you must first create a user.**
+
+To create a user, use the following `curl` command:
+```sh
+curl -X POST http://localhost:4000/users \
+-H "Content-Type: application/json" \
+-d '{"username": "ahmad", "email": "ahmadamri.id@gmail.com", "password": "securepassword123", "name": "ahmad amri sanusi", "gender": "1", "id_number": "123456789", "user_image": "http://example.com/image.jpg", "tenant_id": 1}'
+```
+
+### 7. CHECK DOCKER CONTAINERS
 To check the status of Docker containers, use the following command:
 ```sh
 docker ps
 ```
 
-### 7. DOCKER COMMANDS
+### 8. DOCKER COMMANDS
 Additional Docker commands available in the `Makefile`:
 
 - **Build Docker images**:

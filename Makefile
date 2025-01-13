@@ -41,6 +41,18 @@ docker-compose-restart:
 docker-compose-logs:
 	docker-compose logs -f
 
+# Command to view logs of the app container
+docker-compose-logs-app:
+	docker-compose logs -f app
+
+# Command to view logs of the frontend container
+docker-compose-logs-frontend:
+	docker-compose logs -f frontend
+
+# Command to view logs of the db container
+docker-compose-logs-db:
+	docker-compose logs -f db
+
 # Command to remove Docker containers, networks, and volumes
 docker-clean:
 	docker-compose down -v --rmi all --remove-orphans
